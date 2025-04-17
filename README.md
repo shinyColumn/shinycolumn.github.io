@@ -1,1 +1,1 @@
-# shinyColumn.github.io
+# shinycolumn.github.io
