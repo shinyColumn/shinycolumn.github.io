@@ -1,6 +1,16 @@
 <!DOCTYPE html>
 <html>
+  <head>
+    <title>XSS Test</title>
+    <script>
+      alert("JavaScript executed in WebView!");
+      // JSBridge 예제 호출 (조건부 테스트용)
+      // window.BrowserActivity.callOpenpp("param1", "tel:01085997083");
+    </script>
+  </head>
   <body>
-    <a href="tel:01085997083">phone call</a>
+    <h1>If you see an alert, JS is enabled.</h1>
+    <p>Now trying to call native method via JSBridge...</p>
+    <button onclick="window.BrowserActivity.reloadWebView()">Reload WebView</button>
   </body>
 </html>
