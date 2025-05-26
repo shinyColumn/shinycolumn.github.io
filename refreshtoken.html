@@ -1,19 +1,21 @@
 <html>
-  <body>
+  <body style="background:#111; color:#0f0; font-family:monospace;">
     <h1>RefreshToken PoC</h1>
     <pre id="result">Waiting for token...</pre>
     
     <script>
     window.WebViewJavascriptBridge.callHandler("refreshToken", "", function(resp) {
-      document.getElementById("result").innerText = "Token Response:\n" + resp;
+      let output = "";
 
       try {
         const json = JSON.parse(resp);
-        document.getElementById("result").innerText =
-          "Access Token:\n" + json.token + "\n\nExpires In: " + json.expiresIn;
+        output += "Access Token:\n" + json.token + "\n\n";
+        output += "Expires In: " + json.expiresIn + "\n";
       } catch (e) {
-        document.getElementById("result").innerText = "Error parsing response:\n" + resp;
+        output = "Error parsing JSON:\n" + resp;
       }
+
+      document.getElementById("result").innerText = output;
     });
     </script>
   </body>
