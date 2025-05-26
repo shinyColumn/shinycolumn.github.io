@@ -11,7 +11,16 @@
       log('[*] Bridge Detected!');
       clearInterval(poll);
 
-      // poll every second for native messages
+      try {
+        WebViewJavascriptBridge.init(function(data, responseCallback) {
+          log('[*] init() handler received: ' + JSON.stringify(data));
+          if (responseCallback) responseCallback("OK");
+        });
+        log('[*] Bridge initialized via init()');
+      } catch (e) {
+        log('[!] init failed: ' + e);
+      }
+
       setInterval(() => {
         try {
           const queue = WebViewJavascriptBridge._fetchQueue();
