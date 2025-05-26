@@ -4,6 +4,8 @@
     <pre id="result">Waiting for token...</pre>
 
     <script>
+      document.getElementById("result").innerText += "\nJS executed!";
+
       function setupBridge(callback) {
         if (window.WebViewJavascriptBridge) {
           return callback(WebViewJavascriptBridge);
@@ -33,7 +35,7 @@
             output = "Error parsing response:\n" + resp;
           }
 
-          document.getElementById("result").innerText = output;
+          document.getElementById("result").innerText = "JS executed!\n\n" + output;
         });
       });
     </script>
