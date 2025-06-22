@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Reolink</title>
+</head>
+<body>
+  <div id="output">[*] Waiting for WebView bridge...</div>
+
+  <script>
+    function log(msg) {
+      document.getElementById("output").textContent += "\n" + msg;
+    }
+
+    function waitForBridge(callback) {
+      if (window.WebViewJavascriptBridge) {
+        callback(WebViewJavascriptBridge);
+      } else {
+        document.addEventListener(
+          'WebViewJavascriptBridgeReady',
+          function () {
+            callback(WebViewJavascriptBridge);
+          },
+          false
+        );
+      }
+    }
+
+    waitForBridge(function (bridge) {
+      log("[*] Bridge Detected!");
+      bridge.init(function (msg, cb) {
+        log("[*] Bridge initialized via init()");
+        cb("ok");
+      });
+
+      // getToken
+      bridge.callHandler("getToken", null, function (res) {
+        try {
+          const obj = JSON.parse(res);
+          log("[+] Client ID   : " + (obj.clientId || "(no clientId)"));
+          log("[+] Old Token: " + (obj.token || "(no token)"));
+
+          // refreshToken
+          log("[*] Calling refreshToken...");
+          bridge.callHandler("refreshToken", null, function (newRes) {
+            try {
+              const refreshed = JSON.parse(newRes);
+              log("[+] New Token: " + (refreshed.token || "(no token)"));
+            } catch (e2) {
+              log("[!] Failed to parse refreshToken response.");
+            }
+          });
+
+        } catch (e) {
+          log("[!] Failed to parse token response.");
+        }
+      });
+    });
+  </script>
+</body>
+</html>
